@@ -1,0 +1,27 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+    "name": "ONNXRuntime devcontainer",
+    "build":  {
+        "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "username": "vscode",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": "false"
+        },
+        "./features/apt-packages": {
+            "packages": "ccache libcurl4-openssl-dev libssl-dev"
+        }
+    },
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "remoteUser": "vscode",
+    "postCreateCommand": {
+        "submodules": "git submodule update --recursive --init --depth=1"
+    },
+    "waitFor": "postCreateCommand"
+}

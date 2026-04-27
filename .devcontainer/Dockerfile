@@ -1,0 +1,53 @@
+ARG VARIANT=24.04
+FROM ubuntu:${VARIANT}
+RUN userdel -r ubuntu 2>/dev/null || true; set -eux;\
+    apt-get update;\
+    export DEBIAN_FRONTEND=noninteractive; apt-get install -y --no-install-recommends\
+  build-essential\
+  ca-certificates\
+  ccache\
+  clang\
+  cmake\
+  cppcheck\
+  curl\
+  gdb\
+  git\
+  lldb\
+  llvm\
+  make\
+  ninja-build\
+  time\
+  valgrind\
+  wget\
+  xz-utils\
+;\
+    apt-get autoremove -y; apt-get clean -y ; apt-get clean; rm -rf /var/lib/apt/lists/*;\
+    echo DONE
+
+RUN set -eux;\
+    ARCH=$(uname -m);\
+    case "$ARCH" in\
+        x86_64)   NVIDIA_ARCH="x86_64" ;;\
+        aarch64|arm64) NVIDIA_ARCH="sbsa" ;;\
+        *) echo "Unsupported arch: $ARCH"; exit 1 ;;\
+    esac;\
+    . /etc/os-release;\
+    case "$ID" in\
+        ubuntu) DISTRO_VERSION=$(echo "$VERSION_ID" | tr -d '.') ;;\
+        debian) DISTRO_VERSION="$VERSION_ID" ;;\
+        *) echo "Unsupported distro: $ID"; exit 1 ;;\
+    esac;\
+    REPO_URL="https://developer.download.nvidia.com/compute/cuda/repos/${ID}${DISTRO_VERSION}/${NVIDIA_ARCH}";\
+    wget -q "${REPO_URL}/cuda-keyring_1.1-1_all.deb" -O /tmp/cuda-keyring.deb;\
+    dpkg -i /tmp/cuda-keyring.deb;\
+    rm /tmp/cuda-keyring.deb;\
+    apt-get update;\
+    export DEBIAN_FRONTEND=noninteractive; apt-get install -y --no-install-recommends\
+  cuda-toolkit-12-9\
+  libcudnn9-dev-cuda-12\
+  libnvinfer-dev\
+  libnvinfer-plugin-dev\
+  libnvonnxparsers-dev\
+;\
+    apt-get autoremove -y; apt-get clean; rm -rf /var/lib/apt/lists/*;\
+    echo DONE
