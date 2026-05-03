@@ -113,12 +113,18 @@ jobs:
         run: |
             ${{ env.EXEC }} sh -ceux "LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs CCACHE_DIR=\$(pwd)/.ccache CCACHE_MAXSIZE=$CCACHE_MAXSIZE make ${{ matrix.build_type }}.tests $MAKE_EXTRA"
             ${{ env.EXEC }} sh -ceux "CCACHE_DIR=\$(pwd)/.ccache ccache -s"
+      - name: Detect CPU features
+        if: runner.os == 'Linux'
+        run: |
+          grep -m1 'Model name\|CPU part' /proc/cpuinfo || true
+          grep -m1 'Features' /proc/cpuinfo || true
+          # Skip known upstream ORT MLAS bugs when FEAT_I8MM is present (e.g. Graviton3):
+          # batched SBGEMM produces NaN; SMMLA gives wrong QDQ results.
+          if grep -q 'i8mm' /proc/cpuinfo; then
+            echo "GTEST_FILTER=-MathOpTest.MatMulFloatTypeInitializer_FastMath:QDQTransformerTests.MatMul_*" >> $GITHUB_ENV
+          fi
       - name: Run tests ${{ matrix.build_type }}
         if: matrix.build_type != 'cuda' && matrix.build_type != 'tensorrt'
-        env:
-          # Skip known upstream ORT MLAS bugs on aarch64 with FEAT_BF16+FEAT_I8MM (e.g. Graviton3):
-          # batched SBGEMM produces NaN; SMMLA gives wrong QDQ results.
-          GTEST_FILTER: ${{ runner.arch == 'ARM64' && '-MathOpTest.MatMulFloatTypeInitializer_FastMath:QDQTransformerTests.MatMul_U8U8U8_FastMath:QDQTransformerTests.MatMul_U8U8S8_FastMath:QDQTransformerTests.MatMul_S8S8U8_DisableFastMath' || '' }}
         run: |
             ${{ env.EXEC }} env GTEST_FILTER=${GTEST_FILTER} make ${{ matrix.build_type }}.test
       - name: Run ${{ matrix.build_type }}
