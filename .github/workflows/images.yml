@@ -19,6 +19,18 @@ jobs:
       with:
         submodules: true
     - name: image
+      id: devcontainer
       uses: ./.github/workflows/actions/devcontainer
       with:
         password: ${{ secrets.GITHUB_TOKEN }}
+    - name: smoke test (devcontainer)
+      run: ${{ steps.devcontainer.outputs.exec }} echo "hello world"
+    - name: image (devcontainers-cli)
+      id: devcontainer-cli
+      uses: ./.github/workflows/actions/devcontainer
+      with:
+        name: devcontainers-cli
+        config: .devcontainer/devcontainers.cli/devcontainer.json
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: smoke test (devcontainers-cli)
+      run: ${{ steps.devcontainer-cli.outputs.exec }} echo "hello world"
