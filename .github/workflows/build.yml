@@ -44,6 +44,7 @@ jobs:
         id: cache_keys
         run: |
           echo "onnxruntime=$(git rev-parse HEAD:onnxruntime)" >> $GITHUB_OUTPUT
+          echo "deps=$(git -C onnxruntime rev-parse HEAD:cmake/deps.txt)" >> $GITHUB_OUTPUT
           echo "month=$(date +'%Y-%m')" >> $GITHUB_OUTPUT
       - name: Cache Homebrew downloads
         if: runner.os == 'macOS'
@@ -62,9 +63,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: .deps
-          key: deps-${{ matrix.os }}-${{ steps.cache_keys.outputs.month }}-${{ steps.cache_keys.outputs.onnxruntime }}
+          key: deps-${{ matrix.os }}-${{ steps.cache_keys.outputs.month }}-${{ steps.cache_keys.outputs.deps }}-${{ steps.cache_keys.outputs.onnxruntime }}
           restore-keys: |
-            deps-${{ matrix.os }}-${{ steps.cache_keys.outputs.month }}-
+            deps-${{ matrix.os }}-${{ steps.cache_keys.outputs.month }}-${{ steps.cache_keys.outputs.deps }}-
       - name: Install ccache (macOS only)
         if: runner.os == 'macOS'
         run: brew install ccache
